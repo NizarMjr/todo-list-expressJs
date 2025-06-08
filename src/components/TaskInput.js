@@ -1,42 +1,34 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useRef, useState } from "react";
+import TaskContext from "./TaskContext";
 
 const TaskInput = () => {
     const [value, setValue] = useState('');
-    const [submit, setSubmit] = useState(false);
     const valueRef = useRef();
+    const { fetchTasks } = useContext(TaskContext);
 
-    useEffect(() => {
-        const postNewTask = async () => {
-            try {
-                const response = await fetch('http://localhost:3000/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ task: value })
-                })
-                if (!response.ok) throw new Error('Network response was not ok');
-                const data = await response.json();
-                console.log('Server response:', data);
-            }
+    const postNewTask = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch('http://localhost:3000/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task: value })
+            })
+            if (!res.ok) throw new Error('Problem Network');
+            const data = await res.json();
+            console.log('Server Response : ', data);
 
-            catch (error) {
-                console.error('There was a problem with the fetch operation:', error);
-            }
+        } catch (err) {
+            console.log('There is Problem in fetching', err);
         }
-        if (submit) {
-            postNewTask();
-            setSubmit(false);
-        }
-    }, [submit])
-
-    const addTask = (e) => {
-        setSubmit(true);
-        setValue(value);
         valueRef.current.value = '';
+        fetchTasks();
     }
+
     return (
         <form>
             <input ref={valueRef} type="text" placeholder="add task" value={value} onChange={(e) => setValue(e.target.value)} />
-            <button onClick={(e) => addTask(e)}>add task</button>
+            <button onClick={postNewTask}>add task</button>
         </form>
     )
 }

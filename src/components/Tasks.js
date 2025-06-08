@@ -1,49 +1,38 @@
-import React, { useEffect, useState } from "react";
-import Task from "./Task";
+import React, { useContext } from 'react';
+import Task from './Task';
+import TaskContext from './TaskContext';
 
 const Tasks = () => {
-    const [tasks, setTasks] = useState([]);
+    const { tasks, fetchTasks } = useContext(TaskContext);
 
-    useEffect(() => {
-        const fetchDataFromApi = async () => {
-            try {
-                const req = await fetch('http://localhost:3000/');
-                const res = await req.json();
-                setTasks(res);
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            }
-        };
-        fetchDataFromApi()
-    }, [tasks])
-
-    const clearAllTasks = () => {
-        const fetchClear = async () => {
-            try {
-                const response = await fetch('http://localhost:3000/clear', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'clear' }),
-                })
-                const data = await response.json();
-                console.log('Server response:', data);
-
-            } catch (error) {
-                console.error('There was a problem with the fetch operation:', error);
-            }
+    const clearAllTasks = async () => {
+        try {
+            const res = await fetch('http://localhost:3000/clear', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'clear' }),
+            });
+            if (!res.ok) throw new Error('Failed to clear tasks');
+            await res.json();
+            fetchTasks();
+        } catch (err) {
+            console.error('Failed to clear tasks', err);
         }
-        fetchClear();
-    }
+    };
 
     return (
-        <main>
-            {tasks?.map((task, index) => {
-                return (
-                    <Task task={task} key={index} />
-                )
-            })}
-            <button onClick={() => clearAllTasks()}>Clear All</button>
-        </main>
-    )
-}
+        <div>
+            {tasks.length === 0 && <p>No tasks yet.</p>}
+            {tasks.map((task, index) => (
+                <Task key={index} task={task} />
+            ))}
+            {tasks.length > 0 && (
+                <button onClick={clearAllTasks} style={{ marginTop: '1rem' }}>
+                    Clear All
+                </button>
+            )}
+        </div>
+    );
+};
+
 export default Tasks;

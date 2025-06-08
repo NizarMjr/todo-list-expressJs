@@ -1,56 +1,48 @@
-// NOTE : To guarantee the request method POST and DELETE
-// are working well run this file on the port 3000
-// and the frontend file on the port 3001
-
 const express = require('express')
+const app = express()
 const cors = require('cors');
 
-const app = express();
+
 app.use(express.json());
 
 app.use(cors());
 
-const tasks = [];
-
-app.get('/', (req, res) => {
-    res.status(200).send(tasks);
-})
 const port = 3000;
 
-app.post('/', (req, res) => {
-    const task = req.body;
-    if (!tasks.find(t => t.task === task.task) && task.task !== '') {
-        res.status(201).json({ message: 'Task received successfully', task });
-        tasks.push(task);
-    }
+app.listen(port, () => {
+    console.log(`connecting to port ${port}`);
 })
+
+var tasks = [];
+
+app.get('/', (req, res) => {
+    res.status(200).json(tasks)
+})
+
+app.post('/', (req, res) => {
+    const { task } = req.body;
+    if (task.length === 0)
+        res.status(201).json({ message: 'Empty Task ' });
+
+    if (task.trim() !== '' && !tasks.find(t => t === task))
+        tasks.push(task);
+    res.status(201).json({ message: 'Task recieved successfully' });
+})
+
 app.post('/clear', (req, res) => {
     tasks.length = 0;
-    res.status(201).json('Tasks clear successfully');
+    res.status(201).json({ 'message': 'Clear data' })
 })
+
 app.delete('/', (req, res) => {
-    const task = req.body.task;
-    if (tasks.findIndex(t => t === task)) {
-        tasks.splice(task, 1);
-        res.status(201).json('Task deleted successfully')
-        return;
-    }
-    res.status(400).json('Task Not Found');
+    const { task } = req.body;
+    tasks = tasks.filter((t) => t !== task)
+    res.status(201).json({ message: "task deleted" });
 })
+
 app.put('/', (req, res) => {
     const { task, edit } = req.body;
-    if (edit !== '') {
-        const index = tasks.findIndex(t => t.task === task)
-        const index2 = tasks.findIndex(t => t.task === edit)
-        if (index !== -1 && index === -1) {
-            tasks[index].task = edit;
-            res.status(201).json('Task edited successfully');
-        } else
-            res.status(400).json('Task Not Found Or The Edited Task Is Already In List');
-    } else
-        res.status(400).json('Invalid edit');
+    const newTasks = tasks.map(t => t === task ? edit : t)
+    tasks = newTasks;
+    res.status(201).json({ message: "Task updated successfuly" });
 })
-app.listen(port, () => {
-    console.log('listen to port 3000');
-})
-module.exports = app;
